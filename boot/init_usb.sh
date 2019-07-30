@@ -3,7 +3,17 @@
 
 #    This file is part of P4wnP1.
 #
-#    Copyright (c) 2017, Marcus Mengs. 
+#    Copyright (c) 2017, Marcus Mengs. Amended 2019 Steve Hearnden 
+#
+#    usbgadget is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    usbgadget is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
 #    P4wnP1 is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -63,9 +73,9 @@ function init_usb()
 	echo "deadbeefdeadbeef" > strings/0x409/serialnumber
 #	echo "deadbeefdeadbe11" > strings/0x409/serialnumber
 	# set manufacturer
-	echo "MaMe82" > strings/0x409/manufacturer
+	echo "mksteveuk" > strings/0x409/manufacturer
 	# set product
-	echo "P4wnP1 by MaMe82" > strings/0x409/product
+	echo "usbgadget by mksteveuk" > strings/0x409/product
 
 	# create configuration instance (for RNDIS, ECM and HDI in a SINGLE CONFIGURATION to support Windows composite device enumeration)
 	# ================================================================================================================================
@@ -95,39 +105,6 @@ function init_usb()
 		echo "42:63:65:65:43:21" > functions/ecm.usb1/dev_addr
 	fi
 
-	# create HID function
-	# =======================================================
-	if $USE_HID; then
-		mkdir -p functions/hid.g1
-		PATH_HID_KEYBOARD="/sys/kernel/config/usb_gadget/$GADGETS_DIR/functions/hid.g1/dev"
-		echo 1 > functions/hid.g1/protocol
-		echo 1 > functions/hid.g1/subclass
-		echo 8 > functions/hid.g1/report_length
-		cat $wdir/conf/report_desc > functions/hid.g1/report_desc
-	fi
-
-	# create RAW HID function
-	# =======================================================
-	if $USE_RAWHID; then
-		mkdir -p functions/hid.g2
-		PATH_HID_RAW="/sys/kernel/config/usb_gadget/$GADGETS_DIR/functions/hid.g2/dev"
-		echo 1 > functions/hid.g2/protocol
-		echo 1 > functions/hid.g2/subclass
-		echo 64 > functions/hid.g2/report_length
-		cat $wdir/conf/raw_report_desc > functions/hid.g2/report_desc
-	fi
-
-	# create HID mouse function
-	# =======================================================
-	if $USE_HID_MOUSE; then
-		mkdir -p functions/hid.g3
-		PATH_HID_MOUSE="/sys/kernel/config/usb_gadget/$GADGETS_DIR/functions/hid.g3/dev"
-		echo 2 > functions/hid.g3/protocol
-		echo 1 > functions/hid.g3/subclass
-		echo 6 > functions/hid.g3/report_length
-
-		cat $wdir/conf/mouse_combined_desc > functions/hid.g3/report_desc
-	fi
 
 	# Create USB Mass storage
 	# ==============================
