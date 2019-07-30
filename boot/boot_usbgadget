@@ -69,19 +69,6 @@ if $USB_RNDIS || $USB_ECM; then
 	USB_ETHERNET=true 
 fi
 
-# change hostname to make usbgadget resolveable on "name.local"
-if $WIFI || $USB_ETHERNET; then
-	hostname="MAME82-P4WNP1"
-
-	hostname $hostname
-	echo $hostname > /etc/hostname
-
-	# add to /etc/hosts
-	if ! grep -q -E "^127\.0\.0\.1 $hostname\$" /etc/hosts; then
-	        echo "127.0.0.1 $hostname" >> /etc/hosts
-	fi
-fi
-
 
 
 # if ethernet over USB is in use, detect active interface and start DHCP (all as background job)
