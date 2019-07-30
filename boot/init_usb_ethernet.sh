@@ -146,38 +146,14 @@ function create_DHCP_config()
 
 		EOF
 
-		if $ROUTE_SPOOF; then
-			cat <<- EOF >> /tmp/dnsmasq_usb_eth.conf
-				# router
-				dhcp-option=3,$IF_IP
-
-				# DNS
-				dhcp-option=6,$IF_IP
-
-				# NETBIOS NS
-				dhcp-option=44,$IF_IP
-				dhcp-option=45,$IF_IP
-
-				# routes static (route 0.0.0.1 to 127.255.255.254 through our device)
-				dhcp-option=121,0.0.0.0/1,$IF_IP,128.0.0.0/1,$IF_IP
-				# routes static (route 128.0.0.1 to 255.255.255.254 through our device)
-				dhcp-option=249,0.0.0.0/1,$IF_IP,128.0.0.0/1,$IF_IP
-			EOF
-		else
-			cat <<- EOF >> /tmp/dnsmasq_usb_eth.conf
+		cat <<- EOF >> /tmp/dnsmasq_usb_eth.conf
 				# router disable DHCP gateway announcment
 				dhcp-option=3
 
 				# disable DNS settings
 				dhcp-option=6
-			EOF
-		fi
+		EOF
 
-		if $WPAD_ENTRY; then
-			cat <<- EOF >> /tmp/dnsmasq_usb_eth.conf
-				dhcp-option=252,http://$IF_IP/wpad.dat
-			EOF
-		fi
 
 		cat <<- EOF >> /tmp/dnsmasq_usb_eth.conf
 			dhcp-leasefile=/tmp/dnsmasq.leases
@@ -191,57 +167,26 @@ function start_DHCP_server()
 {
 
 	# recreate DHCP config
-	if $ROUTE_SPOOF; then
-		# DHCP config with static route spoofing
-		cat <<- EOF > $wdir/dnsmasq.conf
-			port=0
-			listen-address=$IF_IP
-			dhcp-range=$IF_DHCP_RANGE,$IF_MASK,5m
-			dhcp-option=252,http://$IF_IP/wpad.dat
+        # DHCP config without static route spoofing
+	cat <<- EOF > $wdir/dnsmasq.conf
+		port=0
+		listen-address=$IF_IP
+		dhcp-range=$IF_DHCP_RANGE,$IF_MASK,5m
 
-			# router
-			dhcp-option=3,$IF_IP
+		# router
+		dhcp-option=3,$IF_IP
 
-			# DNS
-			dhcp-option=6,$IF_IP
+		# DNS
+		dhcp-option=6,$IF_IP
 
-			# NETBIOS NS
-			dhcp-option=44,$IF_IP
-			dhcp-option=45,$IF_IP
+		# NETBIOS NS
+		dhcp-option=44,$IF_IP
+		dhcp-option=45,$IF_IP
 
-			# routes static (route 0.0.0.1 to 127.255.255.254 through our device)
-			dhcp-option=121,0.0.0.0/1,$IF_IP,128.0.0.0/1,$IF_IP
-			# routes static (route 128.0.0.1 to 255.255.255.254 through our device)
-			dhcp-option=249,0.0.0.0/1,$IF_IP,128.0.0.0/1,$IF_IP
-
-			dhcp-leasefile=/tmp/dnsmasq.leases
-			dhcp-authoritative
-			log-dhcp
-		EOF
-	else
-		# DHCP config without static route spoofing
-		cat <<- EOF > $wdir/dnsmasq.conf
-			port=0
-			listen-address=$IF_IP
-			dhcp-range=$IF_DHCP_RANGE,$IF_MASK,5m
-			dhcp-option=252,http://$IF_IP/wpad.dat
-
-			# router
-			dhcp-option=3,$IF_IP
-
-			# DNS
-			dhcp-option=6,$IF_IP
-
-			# NETBIOS NS
-			dhcp-option=44,$IF_IP
-			dhcp-option=45,$IF_IP
-
-			dhcp-leasefile=/tmp/dnsmasq.leases
-			dhcp-authoritative
-			log-dhcp
-		EOF
-	fi;
-
+		dhcp-leasefile=/tmp/dnsmasq.leases
+		dhcp-authoritative
+		log-dhcp
+	EOF
 
 	# start access point if needed
 	if $WIFI && $ACCESS_POINT; then
