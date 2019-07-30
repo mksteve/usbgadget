@@ -1,0 +1,110 @@
+#!/bin/sh
+
+#    This file is part of usbgadget taken from P4wnP1.
+#
+#    Copyright (c) 2017, Marcus Mengs. Amended Steve Hearnden 2019
+#
+#    usbgadget is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    usbgadget is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    P4wnP1 is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    P4wnP1 is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with P4wnP1.  If not, see <http://www.gnu.org/licenses/>.
+
+#
+# usbgadget startup script
+# 	Author:	Marcus Mengs (MaMe82), Steve Hearnden
+#
+# Notes:
+#	- work in progress (contains possible errors and typos)
+#	- if the device isn't detected changing the USB port (USB 2.0 prefered) or plug out and in
+#	  again could help
+#
+# ToDo:
+#	- add manual system date adjusment, to not mess up logs due to missing NTP (store datetime of last boot)
+#	- add shutdown capability to script, to allow file system syncing before power loss (could be done from 
+#	payload by calling "sync && sudo halt")
+
+
+# find working dir of script
+wdir=$( cd $(dirname $BASH_SOURCE[0]) && cd .. && pwd)
+
+echo =================================== usbgadget startup ===========================================
+echo "usbgadget: Loading config ..."
+source $wdir/boot/init_config.sh
+
+echo "usbgadget: Initializing USB gadget ..."
+source $wdir/boot/init_usb.sh
+init_usb
+
+
+detect_usb_hostmode # creates OTG_MODE=true if usbgadget is in OTG mode
+
+# early out if P4wnP1 is used in OTG mode
+if $OTG_MODE; then
+	echo "As usbgadget is detected to run in Host (interactive) mode, we abort device setup now!"
+	exit
+else
+	echo "usbgadget: ... USB gadget initialized"
+fi
+
+# check if ethernet over USB should be used
+if $USB_RNDIS || $USB_ECM; then 
+	USB_ETHERNET=true 
+fi
+
+# change hostname to make usbgadget resolveable on "name.local"
+if $WIFI || $USB_ETHERNET; then
+	hostname="MAME82-P4WNP1"
+
+	hostname $hostname
+	echo $hostname > /etc/hostname
+
+	# add to /etc/hosts
+	if ! grep -q -E "^127\.0\.0\.1 $hostname\$" /etc/hosts; then
+	        echo "127.0.0.1 $hostname" >> /etc/hosts
+	fi
+fi
+
+
+
+# if ethernet over USB is in use, detect active interface and start DHCP (all as background job)
+if $USB_ETHERNET; then
+	echo "usbgadget: Initializing Ethernet over USB..."
+	source $wdir/boot/init_usb_ethernet.sh
+	(
+		detect_active_interface
+
+		if [ "$active_interface" != "none" ]; then 
+			create_DHCP_config
+			dnsmasq -C /tmp/dnsmasq_usb_eth.conf
+
+
+			# wait for client to receive DHCP lease
+			target_ip=""
+			while [ "$target_ip" == "" ]; do
+				target_ip=$(cat /tmp/dnsmasq.leases | cut -d" " -f3)
+				target_name=$(cat /tmp/dnsmasq.leases | awk '{print $4}')
+				sleep 0.2
+			done
+
+		fi
+	)&
+fi
+

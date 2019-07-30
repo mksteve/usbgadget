@@ -1,6 +1,13 @@
 DISCLAIMER
 ==========
 
+usbgadget is based on P4wnP1 project which was a hacking product.  I have made
+all attempts to limit usbgadget to just the functionality for a usbgadget,
+but I may have missed some hacking features.
+
+P4wnP1 DISCLAIMER
+=================
+
 **P4wnP1** is dedicated to penetration testers, redteamers and InfoSec personal.
 P4wnP1 is a Proof of Concept and should be used for authorized testing and/or 
 educational purposes only. The only exception is using it against devices
