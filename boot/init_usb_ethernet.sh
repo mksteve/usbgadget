@@ -47,8 +47,8 @@ function detect_active_interface()
 	#	to use ECM as prefered interface on MacOS and Linux if both, RNDIS and ECM, are supported.
 	if $USE_RNDIS && $USE_ECM; then
 		# bring up both interfaces to check for physical link
-		ifconfig usb0 up
-		ifconfig usb1 up
+#		ifconfig usb0 up
+#		ifconfig usb1 up
 
 		echo "CDC ECM and RNDIS active. Check which interface has to be used via Link detection"
 		while [ "$active_interface" == "none" ]; do
@@ -62,14 +62,14 @@ function detect_active_interface()
 				if [[ $(</sys/class/net/usb1/carrier) == 1 ]]; then
 					echo "Link detected on usb1"; sleep 2
 					active_interface="usb1"
-					ifconfig usb0 down
+#					ifconfig usb0 down
 
 					break
 				fi
 
 				echo "Link detected on usb0"; sleep 2
 				active_interface="usb0"
-				ifconfig usb1 down
+#				ifconfig usb1 down
 
 				break
 			fi
@@ -78,7 +78,7 @@ function detect_active_interface()
 			if [[ $(</sys/class/net/usb1/carrier) == 1 ]]; then
 				echo "Link detected on usb1"; sleep 2
 				active_interface="usb1"
-				ifconfig usb0 down
+#				ifconfig usb0 down
 
 				break
 			fi
@@ -91,7 +91,7 @@ function detect_active_interface()
 	# if eiter one, RNDIS or ECM is active, wait for link on one of them
 	if ($USE_RNDIS && ! $USE_ECM) || (! $USE_RNDIS && $USE_ECM); then 
 		# bring up interface
-		ifconfig usb0 up
+#		ifconfig usb0 up
 
 		echo "CDC ECM or RNDIS active. Check which interface has to be used via Link detection"
 		while [ "$active_interface" == "none" ]; do
@@ -107,9 +107,9 @@ function detect_active_interface()
 
 
 	# setup active interface with correct IP
-	if [ "$active_interface" != "none" ]; then
-		ifconfig $active_interface $IF_IP netmask $IF_MASK
-	fi
+#	if [ "$active_interface" != "none" ]; then
+#		ifconfig $active_interface $IF_IP netmask $IF_MASK
+#	fi
 
 
 	# if active_interface not "none" (RNDIS or CDC ECM are running)

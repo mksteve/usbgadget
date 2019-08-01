@@ -73,6 +73,7 @@ fi
 
 # if ethernet over USB is in use, detect active interface and start DHCP (all as background job)
 if $USB_ETHERNET; then
+    if $USE_DNSMASQ; then
 	echo "usbgadget: Initializing Ethernet over USB..."
 	source $wdir/boot/init_usb_ethernet.sh
 	(
@@ -93,5 +94,6 @@ if $USB_ETHERNET; then
 
 		fi
 	)&
+     fi
 fi
 
