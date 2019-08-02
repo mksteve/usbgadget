@@ -47,8 +47,8 @@ function detect_active_interface()
 	#	to use ECM as prefered interface on MacOS and Linux if both, RNDIS and ECM, are supported.
 	if $USE_RNDIS && $USE_ECM; then
 		# bring up both interfaces to check for physical link
-		ifconfig usb0 up
-		ifconfig usb1 up
+#		ifconfig usb0 up
+#		ifconfig usb1 up
 
 		echo "CDC ECM and RNDIS active. Check which interface has to be used via Link detection"
 		while [ "$active_interface" == "none" ]; do
@@ -62,14 +62,14 @@ function detect_active_interface()
 				if [[ $(</sys/class/net/usb1/carrier) == 1 ]]; then
 					echo "Link detected on usb1"; sleep 2
 					active_interface="usb1"
-					ifconfig usb0 down
+#					ifconfig usb0 down
 
 					break
 				fi
 
 				echo "Link detected on usb0"; sleep 2
 				active_interface="usb0"
-				ifconfig usb1 down
+#				ifconfig usb1 down
 
 				break
 			fi
@@ -78,7 +78,7 @@ function detect_active_interface()
 			if [[ $(</sys/class/net/usb1/carrier) == 1 ]]; then
 				echo "Link detected on usb1"; sleep 2
 				active_interface="usb1"
-				ifconfig usb0 down
+#				ifconfig usb0 down
 
 				break
 			fi
@@ -91,7 +91,7 @@ function detect_active_interface()
 	# if eiter one, RNDIS or ECM is active, wait for link on one of them
 	if ($USE_RNDIS && ! $USE_ECM) || (! $USE_RNDIS && $USE_ECM); then 
 		# bring up interface
-		ifconfig usb0 up
+#		ifconfig usb0 up
 
 		echo "CDC ECM or RNDIS active. Check which interface has to be used via Link detection"
 		while [ "$active_interface" == "none" ]; do
@@ -107,9 +107,9 @@ function detect_active_interface()
 
 
 	# setup active interface with correct IP
-	if [ "$active_interface" != "none" ]; then
-		ifconfig $active_interface $IF_IP netmask $IF_MASK
-	fi
+#	if [ "$active_interface" != "none" ]; then
+#		ifconfig $active_interface $IF_IP netmask $IF_MASK
+#	fi
 
 
 	# if active_interface not "none" (RNDIS or CDC ECM are running)
@@ -146,38 +146,14 @@ function create_DHCP_config()
 
 		EOF
 
-		if $ROUTE_SPOOF; then
-			cat <<- EOF >> /tmp/dnsmasq_usb_eth.conf
-				# router
-				dhcp-option=3,$IF_IP
-
-				# DNS
-				dhcp-option=6,$IF_IP
-
-				# NETBIOS NS
-				dhcp-option=44,$IF_IP
-				dhcp-option=45,$IF_IP
-
-				# routes static (route 0.0.0.1 to 127.255.255.254 through our device)
-				dhcp-option=121,0.0.0.0/1,$IF_IP,128.0.0.0/1,$IF_IP
-				# routes static (route 128.0.0.1 to 255.255.255.254 through our device)
-				dhcp-option=249,0.0.0.0/1,$IF_IP,128.0.0.0/1,$IF_IP
-			EOF
-		else
-			cat <<- EOF >> /tmp/dnsmasq_usb_eth.conf
+		cat <<- EOF >> /tmp/dnsmasq_usb_eth.conf
 				# router disable DHCP gateway announcment
 				dhcp-option=3
 
 				# disable DNS settings
 				dhcp-option=6
-			EOF
-		fi
+		EOF
 
-		if $WPAD_ENTRY; then
-			cat <<- EOF >> /tmp/dnsmasq_usb_eth.conf
-				dhcp-option=252,http://$IF_IP/wpad.dat
-			EOF
-		fi
 
 		cat <<- EOF >> /tmp/dnsmasq_usb_eth.conf
 			dhcp-leasefile=/tmp/dnsmasq.leases
@@ -191,57 +167,26 @@ function start_DHCP_server()
 {
 
 	# recreate DHCP config
-	if $ROUTE_SPOOF; then
-		# DHCP config with static route spoofing
-		cat <<- EOF > $wdir/dnsmasq.conf
-			port=0
-			listen-address=$IF_IP
-			dhcp-range=$IF_DHCP_RANGE,$IF_MASK,5m
-			dhcp-option=252,http://$IF_IP/wpad.dat
+        # DHCP config without static route spoofing
+	cat <<- EOF > $wdir/dnsmasq.conf
+		port=0
+		listen-address=$IF_IP
+		dhcp-range=$IF_DHCP_RANGE,$IF_MASK,5m
 
-			# router
-			dhcp-option=3,$IF_IP
+		# router
+		dhcp-option=3,$IF_IP
 
-			# DNS
-			dhcp-option=6,$IF_IP
+		# DNS
+		dhcp-option=6,$IF_IP
 
-			# NETBIOS NS
-			dhcp-option=44,$IF_IP
-			dhcp-option=45,$IF_IP
+		# NETBIOS NS
+		dhcp-option=44,$IF_IP
+		dhcp-option=45,$IF_IP
 
-			# routes static (route 0.0.0.1 to 127.255.255.254 through our device)
-			dhcp-option=121,0.0.0.0/1,$IF_IP,128.0.0.0/1,$IF_IP
-			# routes static (route 128.0.0.1 to 255.255.255.254 through our device)
-			dhcp-option=249,0.0.0.0/1,$IF_IP,128.0.0.0/1,$IF_IP
-
-			dhcp-leasefile=/tmp/dnsmasq.leases
-			dhcp-authoritative
-			log-dhcp
-		EOF
-	else
-		# DHCP config without static route spoofing
-		cat <<- EOF > $wdir/dnsmasq.conf
-			port=0
-			listen-address=$IF_IP
-			dhcp-range=$IF_DHCP_RANGE,$IF_MASK,5m
-			dhcp-option=252,http://$IF_IP/wpad.dat
-
-			# router
-			dhcp-option=3,$IF_IP
-
-			# DNS
-			dhcp-option=6,$IF_IP
-
-			# NETBIOS NS
-			dhcp-option=44,$IF_IP
-			dhcp-option=45,$IF_IP
-
-			dhcp-leasefile=/tmp/dnsmasq.leases
-			dhcp-authoritative
-			log-dhcp
-		EOF
-	fi;
-
+		dhcp-leasefile=/tmp/dnsmasq.leases
+		dhcp-authoritative
+		log-dhcp
+	EOF
 
 	# start access point if needed
 	if $WIFI && $ACCESS_POINT; then
