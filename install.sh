@@ -88,6 +88,22 @@ else
 	echo "Entry for manual configuration of CDC ECM interface found"
 fi
 
+# append to dhcpcd the usb0 configuration
+if ! grep -q -E 'usb0' /etc/dhcpcd.conf ; then
+    cat <<- EOF >> /etc/dhcpcd.conf
+	profile static_usb0
+	static ip_address=172.16.0.1/20
+	static routers=172.16.0.2
+	static domain_name_servers=172.16.0.1 8.8.8.8 8.8.4.4
+
+	# fallback to static profile on eth0
+	interface usb0
+	fallback static_usb0
+	EOF
+    
+fi
+
+
 
 # create 128 MB image for USB storage
 echo "Creating 128 MB image for USB Mass Storage emulation"
